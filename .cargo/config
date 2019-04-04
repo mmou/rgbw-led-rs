@@ -1,0 +1,5 @@
+[target.thumbv7m-none-eabi]
+runner = "arm-none-eabi-gdb"
+
+[build]
+target = "thumbv7m-none-eabi"
