@@ -12,6 +12,10 @@ embedded-hal = "0.2.2"
 maple-mini = {git = "https://github.com/evq/maple-mini-rs"}
 panic-semihosting = "0.5.1"
 rgb = "0.8"
-smart-leds-trait = "0.1.1"
+smart-leds-trait = { git = "https://github.com/evq/smart-leds-trait", branch = "wip" }
 stm32f103xx-usb = {git = "https://github.com/evq/stm32f103xx-usb", branch = "maple-mini-hack"}
 usb-device = { git = "https://github.com/mvirkkunen/usb-device", rev = "e58e30f3b9c9bf4aab00ea039d129b964a3fd2d3" }
+ditherable-leds = { git = "https://github.com/evq/ditherable-leds", branch= "master" }
+
+[profile.dev]
+opt-level=3
