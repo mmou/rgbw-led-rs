@@ -207,40 +207,43 @@ const APP: () = {
 
     #[interrupt(resources = [USB_DEV, SERIAL, PWMLED, TIME])]
     fn USB_HP_CAN_TX() {
-        usb_poll(
-            &mut resources.USB_DEV,
-            &mut resources.SERIAL,
-            &mut resources.PWMLED,
-            *resources.TIME,
-        );
+        if let Some(color) = usb_poll(&mut resources.USB_DEV, &mut resources.SERIAL) {
+            resources
+                .PWMLED
+                .now(*resources.TIME)
+                .write([color].iter().cloned())
+                .ok();
+        }
     }
 
     #[interrupt(resources = [USB_DEV, SERIAL, PWMLED, TIME])]
     fn USB_LP_CAN_RX0() {
-        usb_poll(
-            &mut resources.USB_DEV,
-            &mut resources.SERIAL,
-            &mut resources.PWMLED,
-            *resources.TIME,
-        );
+        if let Some(color) = usb_poll(&mut resources.USB_DEV, &mut resources.SERIAL) {
+            resources
+                .PWMLED
+                .now(*resources.TIME)
+                .write([color].iter().cloned())
+                .ok();
+        }
     }
 };
 
 fn usb_poll<B: bus::UsbBus>(
     usb_dev: &mut UsbDevice<'static, B>,
     serial: &mut cdc_acm::SerialPort<'static, B>,
-    led: &mut DitherableLeds<
-        PwmLed<
-            maple_mini::pwm::Pwm<TIM2, C3>,
-            maple_mini::pwm::Pwm<TIM2, C4>,
-            maple_mini::pwm::Pwm<TIM2, C1>,
+    /*  led: &mut DitherableLeds<
+            PwmLed<
+                maple_mini::pwm::Pwm<TIM2, C3>,
+                maple_mini::pwm::Pwm<TIM2, C4>,
+                maple_mini::pwm::Pwm<TIM2, C1>,
+            >,
+            U1,
         >,
-        U1,
-    >,
-    time: u32,
-) {
+        time: u32,
+    */
+) -> Option<RGB8> {
     if !usb_dev.poll(&mut [serial]) {
-        return;
+        return None;
     }
 
     let mut buf = [0u8; 3];
@@ -248,8 +251,11 @@ fn usb_poll<B: bus::UsbBus>(
     match serial.read(&mut buf) {
         Ok(count) if count == 3 => {
             let color: RGB8 = buf.into();
-            led.now(time).write([color].iter().cloned()).ok();
+            return Some(color);
+            //led.now(time).write([color].iter().cloned()).ok();
         }
         _ => {}
     }
+
+    return None;
 }
