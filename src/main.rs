@@ -20,16 +20,18 @@ use core::u16;
 use cortex_m::asm;
 use ditherable_leds::{typenum::U1, DitherableLeds, GAMMA_2_2_LUT};
 use hal::PwmPin;
+use rgb::FromSlice;
 use rtfm::app;
-use smart_leds_trait::{SmartLedsWrite, RGB16, RGB8};
+use smart_leds_trait::{SmartLedsWrite, RGBW16, RGBW8};
 use stm32f103xx_usb::UsbBus;
 use usb_device::bus;
 use usb_device::prelude::*;
 
-pub struct PwmLed<PR: PwmPin, PG: PwmPin, PB: PwmPin> {
+pub struct PwmLed<PR: PwmPin, PG: PwmPin, PB: PwmPin, PW: PwmPin> {
     r: PwmLedChannel<PR>,
     g: PwmLedChannel<PG>,
     b: PwmLedChannel<PB>,
+    w: PwmLedChannel<PW>,
 }
 
 struct PwmLedChannel<P: PwmPin> {
@@ -51,45 +53,51 @@ where
     }
 }
 
-impl<PR, PG, PB> PwmLed<PR, PG, PB>
+impl<PR, PG, PB, PW> PwmLed<PR, PG, PB, PW>
 where
     PR: PwmPin,
     PB: PwmPin,
     PG: PwmPin,
+    PW: PwmPin,
     PR::Duty: Into<u32> + TryFrom<u32> + Copy,
     PB::Duty: Into<u32> + TryFrom<u32> + Copy,
     PG::Duty: Into<u32> + TryFrom<u32> + Copy,
+    PW::Duty: Into<u32> + TryFrom<u32> + Copy,
 {
-    pub fn new(r: PR, g: PG, b: PB) -> PwmLed<PR, PG, PB> {
+    pub fn new(r: PR, g: PG, b: PB, w: PW) -> PwmLed<PR, PG, PB, PW> {
         PwmLed {
             r: PwmLedChannel { pin: r },
             g: PwmLedChannel { pin: g },
             b: PwmLedChannel { pin: b },
+            w: PwmLedChannel { pin: w },
         }
     }
 }
 
-impl<PR, PG, PB> SmartLedsWrite for PwmLed<PR, PG, PB>
+impl<PR, PG, PB, PW> SmartLedsWrite for PwmLed<PR, PG, PB, PW>
 where
     PR: PwmPin,
     PB: PwmPin,
     PG: PwmPin,
+    PW: PwmPin,
     PR::Duty: Into<u32> + TryFrom<u32> + Copy,
     PB::Duty: Into<u32> + TryFrom<u32> + Copy,
     PG::Duty: Into<u32> + TryFrom<u32> + Copy,
+    PW::Duty: Into<u32> + TryFrom<u32> + Copy,
 {
-    type Pixel = RGB16;
+    type Pixel = RGBW16;
     type Error = ();
-    fn write<T, I>(&mut self, iterator: T) -> Result<(), ()>
+    fn write<T, I>(&mut self, mut iterator: T) -> Result<(), ()>
     where
         T: Iterator<Item = I>,
-        I: Into<RGB16>,
+        I: Into<RGBW16>,
     {
-        for item in iterator {
-            let item = item.into();
-            self.r.set_brightness(item.r);
-            self.g.set_brightness(item.g);
-            self.b.set_brightness(item.b);
+        if let Some(rgbw) = iterator.next() {
+            let rgbw = rgbw.into();
+            self.r.set_brightness(rgbw.r);
+            self.g.set_brightness(rgbw.g);
+            self.b.set_brightness(rgbw.b);
+            self.w.set_brightness(rgbw.a);
         }
         Ok(())
     }
@@ -98,24 +106,12 @@ where
 #[app(device = maple_mini::stm32)]
 const APP: () = {
     static mut LED: LedPin<Output<PushPull>> = ();
-    /*static mut PWM: <(
-        D11<Alternate<PushPull>>,
-        D10<Alternate<PushPull>>,
-        D9<Alternate<PushPull>>,
-        D8<Alternate<PushPull>>,
-    ) as Pins<TIM2>>::Channels = ();
-    */
-    /*static mut PWMLED: PwmLed<
-        maple_mini::pwm::Pwm<TIM2, C3>,
-        maple_mini::pwm::Pwm<TIM2, C4>,
-        maple_mini::pwm::Pwm<TIM2, C1>,
-    > = ();
-    */
     static mut PWMLED: DitherableLeds<
         PwmLed<
             maple_mini::pwm::Pwm<TIM2, C3>,
             maple_mini::pwm::Pwm<TIM2, C4>,
             maple_mini::pwm::Pwm<TIM2, C1>,
+            maple_mini::pwm::Pwm<TIM2, C2>,
         >,
         U1,
     > = ();
@@ -156,7 +152,7 @@ const APP: () = {
         let mut pwm = device.TIM2.pwm(
             (c1, c2, c3, c4),
             &mut afio.mapr,
-            1.khz(),
+            30.khz(),
             clocks,
             &mut rcc.apb1,
         );
@@ -166,7 +162,7 @@ const APP: () = {
         pwm.2.enable(); // red
         pwm.3.enable(); // green
 
-        let led = PwmLed::new(pwm.2, pwm.3, pwm.0);
+        let led = PwmLed::new(pwm.2, pwm.3, pwm.0, pwm.1);
         let mut led: DitherableLeds<_, U1> = DitherableLeds::new(led, Some(&GAMMA_2_2_LUT));
 
         // setup USB
@@ -231,28 +227,17 @@ const APP: () = {
 fn usb_poll<B: bus::UsbBus>(
     usb_dev: &mut UsbDevice<'static, B>,
     serial: &mut cdc_acm::SerialPort<'static, B>,
-    /*  led: &mut DitherableLeds<
-            PwmLed<
-                maple_mini::pwm::Pwm<TIM2, C3>,
-                maple_mini::pwm::Pwm<TIM2, C4>,
-                maple_mini::pwm::Pwm<TIM2, C1>,
-            >,
-            U1,
-        >,
-        time: u32,
-    */
-) -> Option<RGB8> {
+) -> Option<RGBW8> {
     if !usb_dev.poll(&mut [serial]) {
         return None;
     }
 
-    let mut buf = [0u8; 3];
+    let mut buf = [0u8; 4];
 
     match serial.read(&mut buf) {
-        Ok(count) if count == 3 => {
-            let color: RGB8 = buf.into();
+        Ok(count) if count >= 3 => {
+            let color: RGBW8 = buf.into();
             return Some(color);
-            //led.now(time).write([color].iter().cloned()).ok();
         }
         _ => {}
     }

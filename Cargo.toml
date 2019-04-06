@@ -1,5 +1,5 @@
 [package]
-name = "led-strip-rs"
+name = "rgbw-strip-rs"
 version = "0.1.0"
 authors = ["Merry Mou <moumerry@gmail.com>"]
 edition = "2018"

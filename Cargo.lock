@@ -141,23 +141,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "led-strip-rs"
-version = "0.1.0"
-dependencies = [
- "cortex-m 0.5.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "cortex-m-rtfm 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "cortex-m-semihosting 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "ditherable-leds 0.1.0 (git+https://github.com/evq/ditherable-leds)",
- "embedded-hal 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "maple-mini 0.1.0 (git+https://github.com/evq/maple-mini-rs)",
- "panic-semihosting 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "rgb 0.8.13 (registry+https://github.com/rust-lang/crates.io-index)",
- "smart-leds-trait 0.1.1 (git+https://github.com/evq/smart-leds-trait?branch=wip)",
- "stm32f103xx-usb 0.1.0 (git+https://github.com/evq/stm32f103xx-usb?branch=maple-mini-hack)",
- "usb-device 0.2.0 (git+https://github.com/mvirkkunen/usb-device?rev=e58e30f3b9c9bf4aab00ea039d129b964a3fd2d3)",
-]
-
-[[package]]
 name = "maple-mini"
 version = "0.1.0"
 source = "git+https://github.com/evq/maple-mini-rs#50c3d6fc2399e6247b7bf5c9d6117c30b2dcc675"
@@ -255,6 +238,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "rgb"
 version = "0.8.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "rgbw-strip-rs"
+version = "0.1.0"
+dependencies = [
+ "cortex-m 0.5.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cortex-m-rtfm 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cortex-m-semihosting 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ditherable-leds 0.1.0 (git+https://github.com/evq/ditherable-leds)",
+ "embedded-hal 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "maple-mini 0.1.0 (git+https://github.com/evq/maple-mini-rs)",
+ "panic-semihosting 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rgb 0.8.13 (registry+https://github.com/rust-lang/crates.io-index)",
+ "smart-leds-trait 0.1.1 (git+https://github.com/evq/smart-leds-trait?branch=wip)",
+ "stm32f103xx-usb 0.1.0 (git+https://github.com/evq/stm32f103xx-usb?branch=maple-mini-hack)",
+ "usb-device 0.2.0 (git+https://github.com/mvirkkunen/usb-device?rev=e58e30f3b9c9bf4aab00ea039d129b964a3fd2d3)",
+]
 
 [[package]]
 name = "rustc_version"
